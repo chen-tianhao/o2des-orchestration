@@ -229,23 +229,7 @@ function createHoistAssembly(spreaderName, travelRange, hoistDepth, axis = 'x') 
     const spreader = createSpreader(spreaderName);
     spreader.position.set(0, -4, 0);
     trolley.add(spreader);
-
-    // const guideFrame = new THREE.Mesh(new THREE.BoxGeometry(2, hoistDepth, 2), createMaterial(COLOR.steel, { roughness: 0.55 }));
-    // guideFrame.position.set(0, -hoistDepth / 2 - 2.8, 0);
-    // trolley.add(guideFrame);
-
-    const hook = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.25, 12, 24, Math.PI), createMaterial(COLOR.steel));
-    hook.rotation.x = Math.PI / 2;
-    hook.position.set(0, -hoistDepth - 3.4, 0);
-    trolley.add(hook);
-
-    // Cables will be created dynamically in _updateTransforms
-    // const cable = createCable(new THREE.Vector3(-4, 3, -2), new THREE.Vector3(-4, -hoistDepth - 2.8, -1.6));
-    // trolley.add(cable);
-    // trolley.add(createCable(new THREE.Vector3(4, 3, -2), new THREE.Vector3(4, -hoistDepth - 2.8, -1.6)));
-    // trolley.add(createCable(new THREE.Vector3(-4, 3, 2), new THREE.Vector3(-4, -hoistDepth - 2.8, 1.6)));
-    // trolley.add(createCable(new THREE.Vector3(4, 3, 2), new THREE.Vector3(4, -hoistDepth - 2.8, 1.6)));
-
+    
     if (axis === 'z') {
         group.rotation.y = Math.PI / 2;
     }
