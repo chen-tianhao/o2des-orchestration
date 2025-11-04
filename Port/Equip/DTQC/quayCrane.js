@@ -453,10 +453,11 @@ export class DualTrolleyQuayCrane extends THREE.Group {
         this.platformGroup.add(platformBase);
 
         const rollers = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.5, 0.5, 16, 24),
+            new THREE.CylinderGeometry(0.5, 0.5, 9, 24),
             createMaterial(0xff0000, { roughness: 0.3 })
         );
         rollers.rotation.z = Math.PI / 2;
+        rollers.rotation.y = Math.PI / 2;
         rollers.position.set(-VECTOR.backReach / 2, VECTOR.towerHeight * 0.2 + 0.6, 0);
         rollers.castShadow = true;
         this.platformGroup.add(rollers);
