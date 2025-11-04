@@ -1,0 +1,107 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: #0f172a;
+    color: #f8fafc;
+}
+
+#viewport {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+}
+
+#overlay {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    padding: 18px 20px;
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    max-width: 360px;
+    z-index: 10;
+}
+
+#overlay h1 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    letter-spacing: 0.02em;
+}
+
+#overlay p {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #e2e8f0;
+}
+
+#overlay ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #cbd5f5;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+#modeBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 24px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #38bdf8, #2563eb);
+    color: #0f172a;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+}
+
+#stageLabel {
+    font-size: 13px;
+    color: #cbd5f5;
+}
+
+.hint {
+    border-top: 1px solid rgba(148, 163, 184, 0.22);
+    padding-top: 10px;
+}
+
+.lil-gui.root {
+    position: absolute;
+    top: 24px !important;
+    right: 24px !important;
+    background: rgba(15, 23, 42, 0.78) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+    color: #f8fafc !important;
+}
+
+.lil-gui .title {
+    color: #bae6fd !important;
+}
+
+.lil-gui .lil-gui-button {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #e0f2fe !important;
+}
+
+.lil-gui input[type="range"] {
+    accent-color: #38bdf8;
+}

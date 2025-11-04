@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DTQC Dual Trolley Quay Crane - Three.js</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.164/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164/examples/jsm/",
+                "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="overlay">
+        <h1>PSA Tuas 双小车岸桥</h1>
+        <p>切换自动/手动模式，观察 DTQC 的 Gantry、Primary/Secondary Trolley 与吊具联动。</p>
+        <div class="status">
+            <span id="modeBadge">AUTO</span>
+            <span id="stageLabel">初始化中…</span>
+        </div>
+        <div class="hint">
+            <p>提示：</p>
+            <ul>
+                <li>拖拽右下角控制面板可调节视角。</li>
+                <li>在手动模式下使用滑杆调节小车与吊具位置。</li>
+            </ul>
+        </div>
+    </div>
+    <canvas id="viewport"></canvas>
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
