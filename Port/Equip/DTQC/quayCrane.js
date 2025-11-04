@@ -567,13 +567,15 @@ export class DualTrolleyQuayCrane extends THREE.Group {
     }
 
     runAutoCycle(phase, delta) {
+        const phasePercentage0 = 0.25;
+        const phasePercentage1 = 0.5;
+        const phasePercentage2 = 0.75;
+
         const stages = [
             'Primary trolley picks up container from ship hold',
             'Primary trolley places container on handover platform',
-            'Secondary trolley takes container and delivers to AGV',
-            'AGV departs, secondary trolley returns to platform',
-            'Primary trolley returns to ship hold',
-            'System standby'
+            'Secondary trolley takes container and delivers to AGV, primary trolley returns to ship hold',
+            'AGV departs, secondary trolley returns to platform'
         ];
 
         let stageIndex = 0;
@@ -584,41 +586,34 @@ export class DualTrolleyQuayCrane extends THREE.Group {
         this.state.secondaryTravel = 0.85;
         this.state.secondaryHoist = 0.2;
 
-        if (phase < 0.18) {
+        if (phase < phasePercentage0) {
             stageIndex = 0;
-            const t = easeInOut(phase / 0.18);
+            const t = easeInOut(phase / phasePercentage0);
             this.state.primaryTravel = 1;
-            this.state.primaryHoist = 1 - t;
+            this.state.primaryHoist = THREE.MathUtils.lerp(1, 0.2, t);
             this.state.secondaryTravel = 0.85;
             this.state.secondaryHoist = 0.15;
-        } else if (phase < 0.36) {
+        } else if (phase < phasePercentage1) {
             stageIndex = 1;
-            const t = easeInOut((phase - 0.18) / 0.18);
-            this.state.primaryTravel = 1 - t;
-            this.state.primaryHoist = Math.min(0.2 + t * 0.8, 1);
-        } else if (phase < 0.56) {
+            const t = easeInOut((phase - phasePercentage0) / (phasePercentage1 - phasePercentage0));
+            this.state.primaryTravel = THREE.MathUtils.lerp(1, 0.05, t);
+            this.state.primaryHoist = THREE.MathUtils.lerp(0.2, 1, t);
+        } else if (phase < phasePercentage2) {
             stageIndex = 2;
-            const t = easeInOut((phase - 0.36) / 0.2);
-            this.state.primaryTravel = 0.05;
-            this.state.secondaryTravel = 1 - t;
-            this.state.secondaryHoist = t;
-        } else if (phase < 0.76) {
-            stageIndex = 3;
-            const t = easeInOut((phase - 0.56) / 0.2);
-            this.state.secondaryTravel = t;
-            this.state.secondaryHoist = 1 - t * 0.85;
-        } else if (phase < 0.92) {
-            stageIndex = 4;
-            const t = easeInOut((phase - 0.76) / 0.16);
-            this.state.primaryTravel = t * 0.95;
-            this.state.primaryHoist = 0.3 + t * 0.6;
+            const t = easeInOut((phase - phasePercentage1) / (phasePercentage2 - phasePercentage1));
+            this.state.primaryTravel = THREE.MathUtils.lerp(0.05, 0.95, t);
+            this.state.primaryHoist = THREE.MathUtils.lerp(1, 0.18, t);
+            this.state.secondaryTravel = THREE.MathUtils.lerp(0.85, 0, t);
+            this.state.secondaryHoist = THREE.MathUtils.lerp(0.15, 1, t);
         } else {
-            stageIndex = 5;
-            const idlePhase = (phase - 0.92) / 0.08;
-            this.state.primaryTravel = 0.05 + 0.05 * Math.sin(idlePhase * Math.PI * 2);
-            this.state.primaryHoist = 0.18;
-            this.state.secondaryTravel = 0.7 + 0.1 * Math.sin(idlePhase * Math.PI * 2);
-            this.state.secondaryHoist = 0.18 + 0.08 * Math.sin(idlePhase * Math.PI * 3);
+            stageIndex = 3;
+            const t = Math.min(1, (phase - phasePercentage2) / 0.2);
+            // this.state.primaryTravel = 0.95;
+            // this.state.primaryHoist = 0.18;
+            this.state.primaryTravel = THREE.MathUtils.lerp(0.95, 1, easeInOut(t));
+            this.state.primaryHoist = THREE.MathUtils.lerp(0.18, 1, easeInOut(t));
+            this.state.secondaryTravel = THREE.MathUtils.lerp(0, 0.85, easeInOut(t));
+            this.state.secondaryHoist = THREE.MathUtils.lerp(1, 0.15, easeInOut(t));
         }
 
         this.state.secondaryTravel = clamp01(this.state.secondaryTravel);
