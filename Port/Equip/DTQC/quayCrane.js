@@ -98,7 +98,7 @@ function createCable(from, to, radius = 0.08) {
     cable.position.copy(from).addScaledVector(delta, 0.5);
     cable.lookAt(to);
     cable.rotateX(Math.PI / 2);
-    cable.rotation.y = Math.PI / 2;  // Rotate cable 90 degrees
+    // cable.rotation.y = Math.PI / 2;  // Rotate cable 90 degrees
     cable.castShadow = true;
     return cable;
 }
@@ -396,20 +396,20 @@ export class DualTrolleyQuayCrane extends THREE.Group {
         counterWeight.castShadow = true;
         boomGroup.add(counterWeight);
 
-        const supportCable = createCable(
-            new THREE.Vector3(-VECTOR.backReach * 0.4, VECTOR.towerHeight + 18, 0),
-            new THREE.Vector3(VECTOR.boomOutreach, VECTOR.towerHeight + 16, 0),
-            0.22
-        );
-        boomGroup.add(supportCable);
+        // const supportCable = createCable(
+        //     new THREE.Vector3(-VECTOR.backReach * 0.4, VECTOR.towerHeight + 18, 0),
+        //     new THREE.Vector3(VECTOR.boomOutreach, VECTOR.towerHeight + 16, 0),
+        //     0.22
+        // );
+        // boomGroup.add(supportCable);
 
-        boomGroup.add(
-            createCable(
-                new THREE.Vector3(0, VECTOR.towerHeight + 14, 0),
-                new THREE.Vector3(VECTOR.boomOutreach * 0.62, VECTOR.towerHeight + 14, 0),
-                0.18
-            )
-        );
+        // boomGroup.add(
+        //     createCable(
+        //         new THREE.Vector3(0, VECTOR.towerHeight + 14, 0),
+        //         new THREE.Vector3(VECTOR.boomOutreach * 0.62, VECTOR.towerHeight + 14, 0),
+        //         0.18
+        //     )
+        // );
 
         // Operator cabin
         const cabin = buildOperatorCabin();
