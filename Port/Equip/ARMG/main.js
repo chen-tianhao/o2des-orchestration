@@ -1,7 +1,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js?module";
 import { ARMGCrane } from "./armg.js";
-
+var aaa = 0;
 const containerSize = { length: 6.1, height: 2.59, width: 2.44 };
 const containerGap = 0.25;
 const scene = new THREE.Scene();
@@ -158,7 +158,7 @@ const createYardBlock = () => {
 
   const slots = [];
   const initialLayout = [
-    [1, 1, 1, 1, 1, 1],
+    [1, 1, 0, 1, 1, 1],
     [1, 1, 1, 1, 1, 1],
     [2, 1, 1, 2, 1, 1],
     [1, 1, 2, 1, 1, 2],
@@ -401,6 +401,7 @@ const animationStates = [
       }
       hoistedContainer = null;
       pickNextSlot();
+      aaa=1;
     },
   },
   {
@@ -416,10 +417,8 @@ const animationStates = [
   },
   {
     name: "wait",
-    duration: 1.6,
-    onStart: () => {
-      spawnContainerOnAgv();
-    },
+    duration: 2,
+    onStart: () => {},
   },
 ];
 
@@ -463,7 +462,6 @@ document.addEventListener("keydown", (event) => {
 const animate = () => {
   requestAnimationFrame(animate);
   const delta = clock.getDelta();
-
   const state = animationStates[stateIndex];
   if (state.duration > 0) {
     stateElapsed += delta;
@@ -471,16 +469,19 @@ const animate = () => {
     state.onUpdate?.(progress, delta);
 
     if (stateElapsed >= state.duration) {
-      stateIndex = (stateIndex + 1) % animationStates.length;
-      stateElapsed = 0;
-      animationStates[stateIndex].onStart?.();
+      if (stateIndex == 8) { // wait state
+        resetSimulation();
+      } else {
+        stateIndex = (stateIndex + 1) % animationStates.length;
+        stateElapsed = 0;
+        animationStates[stateIndex].onStart?.();
+      }
     }
   } else {
     state.onUpdate?.(1, delta);
     stateIndex = (stateIndex + 1) % animationStates.length;
     animationStates[stateIndex].onStart?.();
   }
-
   controls.update();
   renderer.render(scene, camera);
 };
