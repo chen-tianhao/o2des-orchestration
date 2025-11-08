@@ -126,13 +126,13 @@ for (const sign of [-1, 1]) {
     const rail = new THREE.Mesh(new THREE.BoxGeometry(railLength, 0.35, railWidth), guideRailMat);
     rail.castShadow = false;
     rail.receiveShadow = true;
-    rail.position.set(0, 0.2, sign * gantryRailOffset);
+    rail.position.set(0, 0.2, sign * gantryRailOffset - 10);
     scene.add(rail);
 
     const sleeper = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.25, 0.9), new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.6 }));
     for (let i = -18; i <= 18; i++) {
         const sleeperClone = sleeper.clone();
-        sleeperClone.position.set(i * 5.6, 0.05, sign * gantryRailOffset);
+        sleeperClone.position.set(i * 5.6, 0.05, sign * gantryRailOffset - 10);
         scene.add(sleeperClone);
     }
 }
