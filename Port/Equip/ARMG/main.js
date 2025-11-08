@@ -58,6 +58,34 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
+const createAxes = (length) => {
+  const group = new THREE.Group();
+
+  // X轴 - 红色
+  const xGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(length, 0, 0)]);
+  const xMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+  const xLine = new THREE.Line(xGeometry, xMaterial);
+  group.add(xLine);
+
+  // Y轴 - 黄色
+  const yGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, length, 0)]);
+  const yMaterial = new THREE.LineBasicMaterial({ color: 0xffff00 });
+  const yLine = new THREE.Line(yGeometry, yMaterial);
+  group.add(yLine);
+
+  // Z轴 - 蓝色
+  const zGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, length)]);
+  const zMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+  const zLine = new THREE.Line(zGeometry, zMaterial);
+  group.add(zLine);
+
+  return group;
+};
+
+const axes = createAxes(5);
+axes.position.set(-20, 0.1, -20);
+scene.add(axes);
+
 const yardMarkingMaterial = new THREE.LineBasicMaterial({ color: 0x2d3748, linewidth: 1 });
 const markingGeometry = new THREE.BufferGeometry();
 markingGeometry.setFromPoints([
@@ -72,7 +100,7 @@ scene.add(markings);
 
 const crane = new ARMGCrane({ railSpan: 40, hoistHeight: 18.2, cantilever: 7.5, trolleyWidth: 6 });
 crane.group.rotation.y = Math.PI / 2;
-crane.group.position.set(14, 0, 4);
+crane.group.position.set(10.8, 0, 4);
 scene.add(crane.group);
 
 const createContainer = (color = 0x3366cc) => {
@@ -122,7 +150,7 @@ const createAGV = () => {
 };
 
 const agv = createAGV();
-agv.group.position.set(-16, 0, -2);
+agv.group.position.set(10.8, 0, -20);
 scene.add(agv.group);
 
 const createYardBlock = () => {

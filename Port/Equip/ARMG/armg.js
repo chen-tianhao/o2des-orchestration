@@ -146,15 +146,17 @@ export class ARMGCrane {
 
     // create rails to visually show the crane's travel path
     const railMaterial = new THREE.MeshStandardMaterial({ color: WALKWAY_COLOR, metalness: 0.2, roughness: 0.7 });
-    const railGeometry = new THREE.BoxGeometry(this.railSpan + this.cantilever, 0.25, 0.6);
+    const railGeometry = new THREE.BoxGeometry(130, 0.25, 0.6);
 
-    const frontRail = new THREE.Mesh(railGeometry, railMaterial);
-    frontRail.position.set(this.cantilever / 2, 0.12, -4);
-    const backRail = frontRail.clone();
-    backRail.position.z = 4;
+    const leftRail = new THREE.Mesh(railGeometry, railMaterial);
+    leftRail.position.set(-this.halfSpan, 0.12, 0);
+    leftRail.rotation.y = Math.PI / 2;
+    const rightRail = new THREE.Mesh(railGeometry, railMaterial);
+    rightRail.position.set(this.halfSpan, 0.12, 0);
+    rightRail.rotation.y = Math.PI / 2;
 
-    frontRail.receiveShadow = backRail.receiveShadow = true;
-    this.group.add(frontRail, backRail);
+    leftRail.receiveShadow = rightRail.receiveShadow = true;
+    this.group.add(leftRail, rightRail);
   }
 
   setTrolleyPosition(localX) {
