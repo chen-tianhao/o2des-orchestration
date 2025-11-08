@@ -1,7 +1,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js?module";
+import GUI from "https://unpkg.com/lil-gui@0.18/dist/lil-gui.esm.js";
 import { ARMGCrane } from "./armg.js";
-var aaa = 0;
 const containerSize = { length: 6.1, height: 2.59, width: 2.44 };
 const containerGap = 0.25;
 const scene = new THREE.Scene();
@@ -14,6 +14,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const sceneElement = document.getElementById("scene");
 sceneElement.appendChild(renderer.domElement);
+
+const modeBadge = document.getElementById("mode-badge");
+const statusText = document.getElementById("status-text");
 
 const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 400);
 camera.position.set(-34, 20, 34);
@@ -269,6 +272,145 @@ const spawnContainerOnAgv = () => {
   dynamicContainers.push(container);
 };
 
+const gantryRange = { min: -12, max: 32 };
+const trolleyRange = { min: -crane.halfSpan, max: crane.cantilever + crane.halfSpan };
+const hoistRange = { min: 0, max: crane.maxHoistDepth };
+const spreaderBaseYaw = crane.spreaderGroup.rotation.y;
+const spreaderYawRange = { min: -30, max: 30 };
+
+const toUnitRange = (value, min, max) => THREE.MathUtils.clamp((value - min) / (max - min), 0, 1);
+const fromUnitRange = (t, min, max) => THREE.MathUtils.lerp(min, max, THREE.MathUtils.clamp(t, 0, 1));
+
+const uiState = {
+  mode: "auto",
+  gantry: toUnitRange(crane.group.position.x, gantryRange.min, gantryRange.max),
+  trolley: toUnitRange(crane.trolleyGroup.position.x, trolleyRange.min, trolleyRange.max),
+  hoist: toUnitRange(-crane.hoistGroup.position.y, hoistRange.min, hoistRange.max),
+  spreaderYaw: toUnitRange(
+    THREE.MathUtils.radToDeg(crane.spreaderGroup.rotation.y - spreaderBaseYaw),
+    spreaderYawRange.min,
+    spreaderYawRange.max,
+  ),
+};
+
+const updateModeBadge = (mode) => {
+  if (!modeBadge) return;
+  if (mode === "manual") {
+    modeBadge.textContent = "MANUAL";
+    modeBadge.classList.add("manual");
+    modeBadge.classList.remove("auto");
+  } else {
+    modeBadge.textContent = "AUTO";
+    modeBadge.classList.add("auto");
+    modeBadge.classList.remove("manual");
+  }
+};
+
+const updateStatusText = (message) => {
+  if (!statusText) return;
+  statusText.textContent = message;
+};
+
+const applyManualState = () => {
+  if (uiState.mode !== "manual") return;
+  crane.group.position.x = fromUnitRange(uiState.gantry, gantryRange.min, gantryRange.max);
+  crane.setTrolleyPosition(fromUnitRange(uiState.trolley, trolleyRange.min, trolleyRange.max));
+  crane.setHoistDepth(fromUnitRange(uiState.hoist, hoistRange.min, hoistRange.max));
+  const yawRadians = spreaderBaseYaw + THREE.MathUtils.degToRad(fromUnitRange(uiState.spreaderYaw, spreaderYawRange.min, spreaderYawRange.max));
+  crane.setSpreaderYaw(yawRadians);
+};
+
+const manualControllers = {};
+const manualControllerList = [];
+const gui = new GUI({ title: "ARMG Control" });
+gui.domElement.classList.add("armg-gui");
+
+const modeController = gui.add(uiState, "mode", { Auto: "auto", Manual: "manual" }).name("Operation Mode");
+const manualFolder = gui.addFolder("Manual Control");
+manualControllers.gantry = manualFolder
+  .add(uiState, "gantry", 0, 1, 0.001)
+  .name("Gantry Position")
+  .onChange(() => applyManualState());
+manualControllerList.push(manualControllers.gantry);
+
+manualControllers.trolley = manualFolder
+  .add(uiState, "trolley", 0, 1, 0.001)
+  .name("Trolley Position")
+  .onChange(() => applyManualState());
+manualControllerList.push(manualControllers.trolley);
+
+manualControllers.hoist = manualFolder
+  .add(uiState, "hoist", 0, 1, 0.001)
+  .name("Spreader Depth")
+  .onChange(() => applyManualState());
+manualControllerList.push(manualControllers.hoist);
+
+manualControllers.spreaderYaw = manualFolder
+  .add(uiState, "spreaderYaw", 0, 1, 0.001)
+  .name("Spreader Yaw")
+  .onChange(() => applyManualState());
+manualControllerList.push(manualControllers.spreaderYaw);
+
+manualFolder.close();
+
+const setManualControlsEnabled = (enabled) => {
+  manualControllerList.forEach((controller) => {
+        if (enabled) {
+      controller.enable?.();
+    } else {
+      controller.disable?.();
+    }
+  });
+  const dom = manualFolder.domElement;
+  if (dom) {
+    dom.style.opacity = enabled ? "1" : "0.35";
+  }
+};
+
+const syncManualControllers = () => {
+  manualControllers.gantry?.updateDisplay();
+  manualControllers.trolley?.updateDisplay();
+  manualControllers.hoist?.updateDisplay();
+  manualControllers.spreaderYaw?.updateDisplay();
+};
+
+function setMode(mode) {
+  if (uiState.mode === mode) return;
+  uiState.mode = mode;
+  if (mode === "manual") {
+    resetSimulation();
+    uiState.gantry = toUnitRange(crane.group.position.x, gantryRange.min, gantryRange.max);
+    uiState.trolley = toUnitRange(crane.trolleyGroup.position.x, trolleyRange.min, trolleyRange.max);
+    uiState.hoist = toUnitRange(-crane.hoistGroup.position.y, hoistRange.min, hoistRange.max);
+    uiState.spreaderYaw = toUnitRange(
+      THREE.MathUtils.radToDeg(crane.spreaderGroup.rotation.y - spreaderBaseYaw),
+      spreaderYawRange.min,
+      spreaderYawRange.max,
+    );
+    syncManualControllers();
+    applyManualState();
+    setManualControlsEnabled(true);
+    updateStatusForCurrentState();
+  } else {
+    resetSimulation();
+    setManualControlsEnabled(false);
+    updateStatusForCurrentState();
+  }
+  updateModeBadge(mode);
+}
+
+modeController.onChange((value) => setMode(value));
+setManualControlsEnabled(false);
+updateModeBadge(uiState.mode);
+updateStatusText("Automated cycle running");
+
+document.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() === "m") {
+    const nextMode = uiState.mode === "auto" ? "manual" : "auto";
+    modeController.setValue(nextMode);
+  }
+});
+
 const clock = new THREE.Clock();
 let stateIndex = 0;
 let stateElapsed = 0;
@@ -401,7 +543,6 @@ const animationStates = [
       }
       hoistedContainer = null;
       pickNextSlot();
-      aaa=1;
     },
   },
   {
@@ -422,9 +563,35 @@ const animationStates = [
   },
 ];
 
-animationStates[stateIndex].onStart?.();
+const stateDescriptions = {
+  "approach-agv": "Approaching AGV",
+  "lower-to-agv": "Lowering to AGV",
+  clamp: "Clamping container",
+  "hoist-clear": "Hoisting to travel clearance",
+  "traverse-yard": "Traversing to yard block",
+  "lower-to-stack": "Lowering to stack",
+  release: "Releasing container",
+  "raise-empty": "Returning spreader",
+  wait: "Cycle complete",
+};
 
-const resetSimulation = () => {
+const waitStateIndex = animationStates.findIndex((state) => state.name === "wait");
+
+function updateStatusForCurrentState() {
+  if (!statusText) return;
+  if (uiState.mode === "manual") {
+    updateStatusText("Manual control active");
+    return;
+  }
+  const currentName = animationStates[stateIndex]?.name ?? "";
+  const readable = stateDescriptions[currentName] ?? currentName;
+  updateStatusText(`Auto · ${readable}`);
+}
+
+animationStates[stateIndex].onStart?.();
+updateStatusForCurrentState();
+
+function resetSimulation() {
   stateIndex = 0;
   stateElapsed = 0;
   hoistedContainer = null;
@@ -451,17 +618,20 @@ const resetSimulation = () => {
   crane.setHoistDepth(travelClearanceDepth);
   spawnContainerOnAgv();
   animationStates[stateIndex].onStart?.();
-};
+  if (uiState.mode === "manual") {
+    applyManualState();
+  }
+  updateStatusForCurrentState();
+}
 
 document.addEventListener("keydown", (event) => {
-  if (event.key.toLowerCase() === "r") {
+  const key = event.key.toLowerCase();
+  if (key === "r") {
     resetSimulation();
   }
 });
 
-const animate = () => {
-  requestAnimationFrame(animate);
-  const delta = clock.getDelta();
+function runAutoCycle(delta) {
   const state = animationStates[stateIndex];
   if (state.duration > 0) {
     stateElapsed += delta;
@@ -469,19 +639,34 @@ const animate = () => {
     state.onUpdate?.(progress, delta);
 
     if (stateElapsed >= state.duration) {
-      if (stateIndex == 8) { // wait state
+      const currentIndex = stateIndex;
+      const nextIndex = (stateIndex + 1) % animationStates.length;
+      stateElapsed = 0;
+
+      if (currentIndex === waitStateIndex) {
         resetSimulation();
       } else {
-        stateIndex = (stateIndex + 1) % animationStates.length;
-        stateElapsed = 0;
+        stateIndex = nextIndex;
         animationStates[stateIndex].onStart?.();
+        updateStatusForCurrentState();
       }
     }
   } else {
     state.onUpdate?.(1, delta);
     stateIndex = (stateIndex + 1) % animationStates.length;
     animationStates[stateIndex].onStart?.();
+    updateStatusForCurrentState();
   }
+}
+
+const animate = () => {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+
+  if (uiState.mode === "auto") {
+    runAutoCycle(delta);
+  }
+
   controls.update();
   renderer.render(scene, camera);
 };

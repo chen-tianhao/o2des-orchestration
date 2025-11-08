@@ -104,3 +104,80 @@ footer a {
 footer a:hover {
   text-decoration: underline;
 }
+
+#hud {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hud-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#mode-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(12, 20, 31, 0.4);
+  transition: background 0.25s ease;
+}
+
+#mode-badge.auto {
+  background: linear-gradient(135deg, #38bdf8, #2563eb);
+}
+
+#mode-badge.manual {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.hud-hint {
+  font-size: 0.75rem;
+  color: #c6d2ea;
+}
+
+#status-text {
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.5rem;
+  background: rgba(16, 20, 31, 0.7);
+  color: #e2e8f9;
+  font-size: 0.85rem;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 12px 28px rgba(5, 8, 13, 0.35);
+}
+
+.armg-gui {
+  right: 24px !important;
+  top: 88px !important;
+}
+
+.armg-gui .title {
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 900px) {
+  #hud {
+    top: auto;
+    bottom: 1.25rem;
+    right: 1rem;
+  }
+
+  .armg-gui {
+    right: 16px !important;
+    top: 96px !important;
+  }
+}
