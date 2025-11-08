@@ -72,7 +72,7 @@ export class ARMGCrane {
     this.group.add(crossBeam2);
 
     // walkway on top of cross beam
-    const walkwayGeometry = new THREE.BoxGeometry(this.railSpan + this.cantilever, 0.2, 3.2);
+    const walkwayGeometry = new THREE.BoxGeometry(this.railSpan + this.cantilever, 0.2, 3);
     const walkwayMaterial = new THREE.MeshStandardMaterial({ color: WALKWAY_COLOR, metalness: 0.2, roughness: 0.8 });
     const walkway = new THREE.Mesh(walkwayGeometry, walkwayMaterial);
     walkway.position.set(this.cantilever / 2, this.crossbeamElevation + 0.7, 0);
@@ -108,20 +108,19 @@ export class ARMGCrane {
     this.hoistGroup.position.set(0, -1.4, 0);
 
     // hoist cables (visual only)
-    const cableMaterial = new THREE.MeshStandardMaterial({ color: CABLE_COLOR, metalness: 0.6, roughness: 0.2 });
+    const cableMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00, metalness: 0.4, roughness: 0.5, emissive: 0x333300 });
     const cableGeometry = new THREE.CylinderGeometry(0.08, 0.08, 1.5, 12);
 
     this.cableMeshes = [];
     const cableOffsets = [
-      [-this.trolleyWidth / 2 + 0.8, 0, -1.1],
-      [this.trolleyWidth / 2 - 0.8, 0, -1.1],
-      [-this.trolleyWidth / 2 + 0.8, 0, 1.1],
-      [this.trolleyWidth / 2 - 0.8, 0, 1.1],
+      [-1.1, 0, 2.2],
+      [-1.1, 0, -2.2],
+      [1.1, 0, 2.2],
+      [1.1, 0, -2.2],
     ];
 
     cableOffsets.forEach(([x, , z]) => {
       const cable = new THREE.Mesh(cableGeometry, cableMaterial);
-      cable.rotation.x = Math.PI / 2;
       cable.position.set(x, -0.75, z);
       this.cableMeshes.push(cable);
       this.trolleyGroup.add(cable);
@@ -167,10 +166,11 @@ export class ARMGCrane {
     const clamped = THREE.MathUtils.clamp(depth, 0, this.maxHoistDepth);
     this.hoistGroup.position.y = -clamped;
 
-    const cableLength = Math.max(1.4, clamped + 1.4);
+    const cableLength = Math.max(1.4, clamped + 1.75);
+    const bottomY = -clamped - 1.75;
     this.cableMeshes.forEach((mesh) => {
       mesh.scale.y = cableLength / 1.5;
-      mesh.position.y = -cableLength / 2;
+      mesh.position.y = (0 + bottomY) / 2;
     });
   }
 
