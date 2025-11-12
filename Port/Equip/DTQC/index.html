@@ -33,5 +33,11 @@
     </div>
     <canvas id="viewport"></canvas>
     <script type="module" src="./main.js"></script>
+    <script>
+        // 每15分钟自动刷新页面，避免长时间运行停止响应
+        setInterval(() => {
+            location.reload();
+        }, 15 * 60 * 1000); // 15分钟 = 15 * 60 * 1000 毫秒
+    </script>
 </body>
 </html>
