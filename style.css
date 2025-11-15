@@ -104,9 +104,10 @@ img {
 }
 
 .logo-image {
-	width: 56px;
-	height: 56px;
+	height: 48px;
+	width: auto;
 	object-fit: contain;
+	display: block;
 	filter: drop-shadow(0 8px 18px rgba(3, 4, 20, 0.45));
 }
 
