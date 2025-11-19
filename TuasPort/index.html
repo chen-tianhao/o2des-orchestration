@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Tuas Mega Port Visualization</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <!-- Mapbox GL JS v3.16.0 -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .legend {
+            background-color: #fff;
+            border-radius: 3px;
+            bottom: 30px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            padding: 10px;
+            position: absolute;
+            right: 10px;
+            z-index: 1;
+        }
+        .legend h4 { margin: 0 0 10px; }
+        .legend div span {
+            border-radius: 50%;
+            display: inline-block;
+            height: 10px;
+            margin-right: 5px;
+            width: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div class="legend">
+    <h4>Port Components</h4>
+    <div><span style="background-color: #1f78b4"></span>Vessel (货轮)</div>
+    <div><span style="background-color: #e31a1c"></span>Quay Crane (岸桥)</div>
+    <div><span style="background-color: #33a02c"></span>Yard Crane (场桥)</div>
+    <div><span style="background-color: #ff7f00"></span>AGV (自动导引车)</div>
+    <div><span style="background-color: #6a3d9a"></span>Container Yard (堆场)</div>
+</div>
+
+<script>
+    // =============================================================================
+    // CONFIGURATION
+    // =============================================================================
+    // TODO: Replace with your own Mapbox Access Token
+    // 由于这是一个纯前端页面，Token 必须暴露在浏览器中才能向 Mapbox 服务器请求地图数据，因此无法在代码层面完全隐藏它。
+    // 最标准且有效的安全措施是在 Mapbox 后台进行配置：
+    // 登录 Mapbox Account。
+    // 创建一个新的 Token（不要使用默认的 pk.eyJ... 公共 Token）。
+    // 在 Token 设置页面，找到 URL restrictions（URL 限制）。
+    // 添加您的网站域名（例如 yourdomain.com 或本地测试用的 localhost）。
+    // 如果是本地开发，可以添加 http://localhost:8080 或 http://127.0.0.1:5500。
+    // 这样，即使别人复制了您的 Token，只要他们的网站域名不在白名单内，Mapbox 就会拒绝服务。
+    const MAPBOX_TOKEN = 'pk.eyJ1IjoiZm0wNTE3IiwiYSI6ImNtaTY1dHJnMzBjZG4yanM5a2g0cGI1ZDgifQ.Pb4vTlOAnN6ZC9Ex2uafGg'; 
+
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+
+    // Center coordinates: [Longitude, Latitude]
+    const CENTER = [103.62857271913894, 1.2444779700693098];
+
+    const map = new mapboxgl.Map({
+        container: 'map',
+        // Use Mapbox Standard style or Streets
+        style: 'mapbox://styles/mapbox/standard', 
+        center: CENTER,
+        zoom: 16, // Initial zoom level to see details
+        pitch: 0, // 2D view (top-down)
+        bearing: 0
+    });
+
+    // =============================================================================
+    // HELPER FUNCTIONS FOR GEOMETRY GENERATION
+    // =============================================================================
+    // Simple approximation: 1 degree lat ~= 111,000m, 1 degree lng ~= 111,000m (at equator)
+    const METERS_PER_DEGREE = 111000;
+
+    function offset(coord, dx, dy) {
+        return [
+            coord[0] + (dx / METERS_PER_DEGREE),
+            coord[1] + (dy / METERS_PER_DEGREE)
+        ];
+    }
+
+    // Generate a polygon for a rectangle centered at `center` with `width` and `height`
+    // width is along X axis (East-West), height is along Y axis (North-South)
+    function createRect(center, width, height) {
+        const halfW = width / 2;
+        const halfH = height / 2;
+        const p1 = offset(center, -halfW, halfH); // Top-Left
+        const p2 = offset(center, halfW, halfH);  // Top-Right
+        const p3 = offset(center, halfW, -halfH); // Bottom-Right
+        const p4 = offset(center, -halfW, -halfH); // Bottom-Left
+        return [p1, p2, p3, p4, p1]; // Close the loop
+    }
+
+    // =============================================================================
+    // DATA GENERATION
+    // =============================================================================
+    
+    // Layout parameters (in meters)
+    const YARD_WIDTH = 40;
+    const YARD_HEIGHT = 300;
+    const YARD_GAP_X = 20;
+    const YARD_GAP_Y = 50;
+    
+    const VESSEL_WIDTH = 350;
+    const VESSEL_HEIGHT = 50;
+    
+    const QC_WIDTH = 30;
+    const QC_HEIGHT = 100; // Spanning over water and land
+
+    // Generate features
+    const yards = [];
+    const ycs = [];
+    const qcs = [];
+    const vessels = [];
+    const agvs = [];
+
+    // 1. Create Yards (Perpendicular to shore)
+    // Assume shore is roughly East-West at y=100m relative to center
+    // Yards are arranged in a grid below the shore
+    const startX = -400;
+    const startY = -100;
+    
+    for (let i = 0; i < 8; i++) { // 8 blocks horizontally
+        const cx = startX + i * (YARD_WIDTH + YARD_GAP_X);
+        const cy = startY;
+        
+        // Create Yard Block
+        const yardCenter = offset(CENTER, cx, cy);
+        yards.push({
+            type: 'Feature',
+            properties: { type: 'yard', id: i },
+            geometry: {
+                type: 'Polygon',
+                coordinates: [createRect(yardCenter, YARD_WIDTH, YARD_HEIGHT)]
+            }
+        });
+
+        // Create Yard Crane (YC) on top of the yard (random position along the block)
+        const ycOffsetY = (Math.random() - 0.5) * (YARD_HEIGHT - 40);
+        const ycCenter = offset(yardCenter, 0, ycOffsetY);
+        ycs.push({
+            type: 'Feature',
+            properties: { type: 'yc', id: i },
+            geometry: {
+                type: 'Polygon',
+                coordinates: [createRect(ycCenter, YARD_WIDTH + 10, 15)] // Wider than yard, short length
+            }
+        });
+    }
+
+    // 2. Create Vessels (Along the shore, North side)
+    // Shore line approx at y = 150m relative to center
+    const vesselCenter1 = offset(CENTER, -200, 250);
+    vessels.push({
+        type: 'Feature',
+        properties: { name: 'Vessel A' },
+        geometry: {
+            type: 'Polygon',
+            coordinates: [createRect(vesselCenter1, VESSEL_WIDTH, VESSEL_HEIGHT)]
+        }
+    });
+    
+    const vesselCenter2 = offset(CENTER, 200, 250);
+    vessels.push({
+        type: 'Feature',
+        properties: { name: 'Vessel B' },
+        geometry: {
+            type: 'Polygon',
+            coordinates: [createRect(vesselCenter2, VESSEL_WIDTH, VESSEL_HEIGHT)]
+        }
+    });
+
+    // 3. Create Quay Cranes (QT) - Along the shore edge
+    const qcY = 180; // Positioned at the quay edge
+    for (let i = 0; i < 6; i++) {
+        const qcX = -300 + i * 120;
+        const qcCenter = offset(CENTER, qcX, qcY);
+        qcs.push({
+            type: 'Feature',
+            properties: { type: 'qt', id: i },
+            geometry: {
+                type: 'Polygon',
+                coordinates: [createRect(qcCenter, 20, 80)]
+            }
+        });
+    }
+
+    // 4. Create AGVs (Moving between Yards and Quay)
+    // Randomly scattered in the transfer zone (y between 50 and 150)
+    for (let i = 0; i < 20; i++) {
+        const agvX = (Math.random() - 0.5) * 800;
+        const agvY = 80 + (Math.random() - 0.5) * 60;
+        const agvCenter = offset(CENTER, agvX, agvY);
+        agvs.push({
+            type: 'Feature',
+            properties: { type: 'agv', id: i },
+            geometry: {
+                type: 'Polygon',
+                coordinates: [createRect(agvCenter, 12, 3)] // Small vehicle
+            }
+        });
+    }
+
+    // =============================================================================
+    // MAP LOADING & RENDERING
+    // =============================================================================
+    map.on('load', () => {
+        
+        // Add Sources
+        map.addSource('port-components', {
+            type: 'geojson',
+            data: {
+                type: 'FeatureCollection',
+                features: [...yards, ...ycs, ...qcs, ...vessels, ...agvs]
+            }
+        });
+
+        // Add Layers
+        
+        // 1. Yards (Purple)
+        map.addLayer({
+            id: 'yards-layer',
+            type: 'fill',
+            source: 'port-components',
+            filter: ['==', 'type', 'yard'],
+            paint: {
+                'fill-color': '#6a3d9a',
+                'fill-opacity': 0.5,
+                'fill-outline-color': '#4a2d7a'
+            }
+        });
+
+        // 2. Vessels (Blue)
+        map.addLayer({
+            id: 'vessels-layer',
+            type: 'fill',
+            source: 'port-components',
+            filter: ['has', 'name'], // Vessels have 'name' property
+            paint: {
+                'fill-color': '#1f78b4',
+                'fill-opacity': 0.8
+            }
+        });
+
+        // 3. Quay Cranes (Red)
+        map.addLayer({
+            id: 'qt-layer',
+            type: 'fill',
+            source: 'port-components',
+            filter: ['==', 'type', 'qt'],
+            paint: {
+                'fill-color': '#e31a1c',
+                'fill-opacity': 0.9
+            }
+        });
+
+        // 4. Yard Cranes (Green)
+        map.addLayer({
+            id: 'yc-layer',
+            type: 'fill',
+            source: 'port-components',
+            filter: ['==', 'type', 'yc'],
+            paint: {
+                'fill-color': '#33a02c',
+                'fill-opacity': 0.9
+            }
+        });
+
+        // 5. AGVs (Orange)
+        map.addLayer({
+            id: 'agv-layer',
+            type: 'fill',
+            source: 'port-components',
+            filter: ['==', 'type', 'agv'],
+            paint: {
+                'fill-color': '#ff7f00',
+                'fill-opacity': 1
+            }
+        });
+
+        // Add a scale control to the map
+        map.addControl(new mapboxgl.ScaleControl());
+    });
+
+    // Add navigation controls
+    map.addControl(new mapboxgl.NavigationControl());
+
+</script>
+</body>
+</html>
